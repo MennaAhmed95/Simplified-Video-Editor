@@ -1,6 +1,6 @@
 # Video Editor - Frontend Application
 
-A simplified video editor application built with React, featuring a multi-track timeline, clip management, and project persistence.
+A simplified video editor application built with React, featuring a multi-track timeline, clip management, project persistence, and notes integration.
 
 ## Stack
 
@@ -8,14 +8,22 @@ A simplified video editor application built with React, featuring a multi-track 
 - **TailwindCSS v3+** (v3.4.19)
 - **shadcn/ui** - Component library
 - **Zustand** - State management (simpler, less boilerplate)
-- **Ramda** - Functional programming utilities
+- **Ramda** - Functional programming utilities (with custom flatMap implementation)
 - **Vite** - Build tool
+- **Radix UI Icons** - Icon library
 
 ## Getting Started
 
 ### Prerequisites
 
-1. Start the mock API server (in `../mock-api/`):
+**Important:** The frontend requires a running backend API server.
+
+#### 1. Start the Mock API Server
+
+The mock API server provides:
+- REST endpoints for project management (`/api/projects`)
+- GraphQL endpoint for notes (`/graphql`)
+
 ```bash
 cd ../mock-api
 npm install
@@ -23,6 +31,11 @@ npm start
 ```
 
 The API server will run on `http://localhost:3000`
+
+If you need to change the API URL, set the environment variable:
+```bash
+VITE_API_URL=http://localhost:3000 yarn dev
+```
 
 ### Install Dependencies
 
@@ -52,13 +65,35 @@ yarn preview
 
 ## Features
 
-✅ **Multi-track Timeline** - Add video, audio, and background tracks
-✅ **Clip Management** - Add, move, split, and delete clips
-✅ **Playhead Control** - Scrub through timeline, play/pause
-✅ **Project Management** - Create, save, and load projects
-✅ **Notes System** - Add notes to projects (GraphQL)
-✅ **Undo/Redo** - Full history support
-✅ **Timeline Zoom** - Zoom in/out for precise editing
+### ✅ Fully Implemented
+
+- **Multi-track Timeline** - Add video, audio, and background tracks with proper naming
+- **Clip Management** - Add, move, split, and delete clips on timeline
+- **Clip Deletion** - Delete Clip button in toolbar (with toast notification)
+- **Track Deletion** - Delete Track button (✕) on track hover
+- **Playhead Control** - Play/pause with scrubbing, playhead visual indicator
+- **Project Management** - Create, load, and manage projects
+- **Notes System** - Add and view notes per project (GraphQL integration)
+- **Undo/Redo** - Full history support for timeline changes
+- **Timeline Zoom** - Zoom in/out (0.5x - 3x) for precise editing
+- **Timeline Grid** - Visual grid overlay with time markers
+- **Responsive Design** - Mobile and desktop optimized UI
+- **Track Management** - Add different track types with proper naming
+- **Toast Notifications** - Non-blocking user feedback for actions
+
+### ⚠️ Known Limitations
+
+- **Multiple clip selection** - Currently only single selection
+- **Drag-to-extend clip duration** - Not implemented
+- **Keyboard shortcuts** - Not implemented
+- **Confirmation dialogs** - Deletions happen immediately without confirmation
+
+### ❌ Not Implemented (Nice-to-have)
+
+- **Fluture.js / Effect.js** - Using native Promises instead
+- **Advanced clip grouping** - Not implemented
+- **Audio waveform visualization** - Not needed for mock video
+- **Export/Download** - Not implemented
 
 ## Project Structure
 
@@ -103,16 +138,64 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed architecture documentation
 
 1. **Create a Project**: Click "New Project" in the sidebar
 2. **Add Tracks**: Click "Add Track" at the bottom
-3. **Add Clips**: Click "Add Clip" on any track (clips are added at playhead position)
+3. **Add Clips**: Click "+" on any track (clips are added at playhead position)
 4. **Move Clips**: Drag clips horizontally on the timeline
-5. **Split Clips**: Select a clip and click "Split Clip" (splits at playhead)
-6. **Playback**: Use play/pause button or scrub the timeline
-7. **Save**: Click "Save" in the header to persist changes
-8. **Undo/Redo**: Use arrow buttons in the header
+5. **Select Clips**: Click a clip to select it
+6. **Split Clips**: Select a clip and click "Split Clip" (splits at playhead)
+7. **Delete Clips**: Select a clip and click "Delete Clip" button
+8. **Delete Tracks**: Hover over track name and click "✕" button
+9. **Playback**: Use play/pause button or click on timeline to scrub
+10. **Zoom**: Use zoom controls in the timeline header (- / + buttons)
+11. **Save**: Click "Save" in the header to persist changes
+12. **Undo/Redo**: Use arrow buttons in the header
 
 ## API Integration
 
-- **Projects**: REST API at `http://localhost:3000/api/projects`
-- **Notes**: GraphQL API at `http://localhost:3000/graphql`
+### REST API - Projects
 
-See the mock-api README for API documentation.
+- **Base URL**: `http://localhost:3000/api/projects`
+- **Operations**:
+  - `GET /api/projects` - List all projects
+  - `POST /api/projects` - Create new project
+  - `PUT /api/projects/:id` - Update project
+  - `DELETE /api/projects/:id` - Delete project
+
+Project structure:
+```json
+{
+  "id": "unique-id",
+  "data": {
+    "name": "Project Name",
+    "timeline": {
+      "tracks": [...],
+      "duration": 60
+    }
+  }
+}
+```
+
+### GraphQL API - Notes
+
+- **Endpoint**: `http://localhost:3000/graphql`
+- **GraphiQL IDE**: `http://localhost:3000/graphql` (in browser)
+
+Available queries:
+- `notes(projectId)` - Get all notes for a project
+
+Available mutations:
+- `createNote(projectId, data)` - Create a new note
+- `updateNote(id, data)` - Update a note
+- `deleteNote(id)` - Delete a note
+
+Note structure:
+```json
+{
+  "id": "unique-id",
+  "data": {
+    "content": "Note content",
+    "createdAt": "2024-01-28T..."
+  }
+}
+```
+
+See the mock-api README for detailed API documentation.
