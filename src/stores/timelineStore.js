@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import * as R from 'ramda';
+// Use chain for flatMap functionality
+const flatMap = R.chain;
 
 /**
  * Timeline Store
@@ -64,9 +66,18 @@ export const useTimelineStore = create((set, get) => ({
 
   // Remove a track
   removeTrack: (trackId) => {
-    set((state) => ({
-      tracks: R.reject(R.propEq('id', trackId), state.tracks),
-    }));
+    console.log('removeTrack called with:', trackId, 'type:', typeof trackId);
+    const currentTracks = get().tracks;
+    console.log('Current tracks IDs:', currentTracks.map(t => ({ id: t.id, type: typeof t.id })));
+    
+    set((state) => {
+      console.log('About to filter tracks...');
+      const newTracks = state.tracks.filter(track => track.id !== trackId);
+      console.log('Before removal - count:', state.tracks.length, 'After removal - count:', newTracks.length);
+      return { tracks: newTracks };
+    });
+    
+    console.log('After set - tracks count:', get().tracks.length);
   },
 
   // Add a clip to a track
@@ -92,7 +103,7 @@ export const useTimelineStore = create((set, get) => ({
 
       // Update duration if needed
       const maxEndTime = R.pipe(
-        R.flatMap(R.prop('clips')),
+        flatMap(R.prop('clips')),
         R.map(R.prop('endTime')),
         R.reduce(R.max, 0)
       )(tracks);
@@ -118,7 +129,7 @@ export const useTimelineStore = create((set, get) => ({
 
       // Update duration if needed
       const maxEndTime = R.pipe(
-        R.flatMap(R.prop('clips')),
+        flatMap(R.prop('clips')),
         R.map(R.prop('endTime')),
         R.reduce(R.max, 0)
       )(tracks);
@@ -132,15 +143,23 @@ export const useTimelineStore = create((set, get) => ({
 
   // Remove a clip
   removeClip: (clipId) => {
+    console.log('removeClip called with:', clipId, 'type:', typeof clipId);
+    
     set((state) => {
-      const tracks = state.tracks.map(track => ({
-        ...track,
-        clips: R.reject(R.propEq('id', clipId), track.clips),
-      }));
+      const tracks = state.tracks.map(track => {
+        const newClips = track.clips.filter(clip => clip.id !== clipId);
+        if (track.clips.length !== newClips.length) {
+          console.log(`Clip removed from track ${track.id}: ${track.clips.length} -> ${newClips.length}`);
+        }
+        return {
+          ...track,
+          clips: newClips,
+        };
+      });
 
       // Update duration
       const maxEndTime = R.pipe(
-        R.flatMap(R.prop('clips')),
+        flatMap(R.prop('clips')),
         R.map(R.prop('endTime')),
         R.reduce(R.max, 0)
       )(tracks);

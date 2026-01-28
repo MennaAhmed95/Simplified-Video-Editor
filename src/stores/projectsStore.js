@@ -76,12 +76,22 @@ export const useProjectsStore = create((set, get) => ({
       const updatedProject = await projectsService.updateProject(id, projectData);
       const projects = get().projects;
       const index = projects.findIndex(p => p.id === id);
+      
+      // Merge the response with the data we sent to ensure timeline is preserved
+      const mergedProject = {
+        ...updatedProject,
+        data: {
+          ...updatedProject.data,
+          timeline: projectData.timeline, // Use the timeline we just saved
+        }
+      };
+      
       const updatedProjects = index >= 0
-        ? R.update(index, updatedProject, projects)
+        ? R.update(index, mergedProject, projects)
         : projects;
       
       set({ projects: updatedProjects, isLoading: false });
-      return updatedProject;
+      return mergedProject;
     } catch (error) {
       set({ error: error.message, isLoading: false });
       throw error;

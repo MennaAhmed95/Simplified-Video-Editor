@@ -3,22 +3,41 @@ import { Button } from '../ui/button';
 import { useHistoryStore } from '../../stores/historyStore';
 import { useProjectsStore } from '../../stores/projectsStore';
 import { useTimelineStore } from '../../stores/timelineStore';
+import { useToastStore } from '../../stores/toastStore';
 import { ArrowLeftIcon, ArrowRightIcon, DownloadIcon, PersonIcon } from '@radix-ui/react-icons';
 
 export const Header = () => {
   const { canUndo, canRedo, undo, redo } = useHistoryStore();
   const { getCurrentProject, updateProject } = useProjectsStore();
   const { exportTimeline } = useTimelineStore();
+  const { addToast } = useToastStore();
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [saveSuccess, setSaveSuccess] = React.useState(false);
 
   const handleSave = async () => {
     const project = getCurrentProject();
-    if (!project) return;
+    if (!project) {
+      console.warn('No project selected');
+      return;
+    }
 
-    const timelineData = exportTimeline();
-    await updateProject(project.id, {
-      ...project.data,
-      timeline: timelineData,
-    });
+    setIsSaving(true);
+    try {
+      const timelineData = exportTimeline();
+      await updateProject(project.id, {
+        ...project.data,
+        timeline: timelineData,
+      });
+      setSaveSuccess(true);
+      addToast('Project saved successfully!', 'success');
+      // Reset success message after 2 seconds
+      setTimeout(() => setSaveSuccess(false), 2000);
+    } catch (error) {
+      console.error('Error saving project:', error);
+      addToast('Error saving project: ' + error.message, 'error');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleUndo = () => {
@@ -68,10 +87,11 @@ export const Header = () => {
         <Button
           variant="outline"
           onClick={handleSave}
-          className="gap-2"
+          disabled={isSaving}
+          className={`gap-2 ${saveSuccess ? 'bg-green-500/10 text-green-600' : ''}`}
         >
           <DownloadIcon className="h-4 w-4" />
-          Save
+          {saveSuccess ? 'Saved!' : isSaving ? 'Saving...' : 'Save'}
         </Button>
         <Button variant="ghost" size="icon" title="Settings">
           <PersonIcon className="h-4 w-4" />

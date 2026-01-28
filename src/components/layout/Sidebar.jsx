@@ -1,24 +1,30 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useProjectsStore } from '../../stores/projectsStore';
 import { useNotesStore } from '../../stores/notesStore';
 import { Button } from '../ui/button';
 import { FileTextIcon, ClipboardIcon, PlusIcon } from '@radix-ui/react-icons';
 
 export const Sidebar = () => {
-  const { projects, fetchProjects, createProject, setCurrentProject, currentProjectId } = useProjectsStore();
-  const { notes, fetchNotes, createNote, currentProjectId: notesProjectId } = useNotesStore();
+  const { projects, fetchProjects, createProject, setCurrentProject, currentProjectId, fetchProject } = useProjectsStore();
+  const { notes, fetchNotes, createNote, deleteNote, currentProjectId: notesProjectId } = useNotesStore();
   const [showProjects, setShowProjects] = useState(true);
   const [showNotes, setShowNotes] = useState(false);
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+    if (!hasInitialized.current) {
+      hasInitialized.current = true;
+      fetchProjects();
+    }
+  }, []);
 
   useEffect(() => {
     if (currentProjectId) {
       fetchNotes(currentProjectId);
+      // Fetch full project data to ensure we have latest timeline
+      fetchProject(currentProjectId);
     }
-  }, [currentProjectId, fetchNotes]);
+  }, [currentProjectId, fetchNotes, fetchProject]);
 
   const handleCreateProject = async () => {
     const newProject = await createProject({
@@ -107,9 +113,28 @@ export const Sidebar = () => {
               {notes.map((note) => (
                 <div
                   key={note.id}
-                  className="px-3 py-2 rounded-md text-sm hover:bg-accent"
+                  className="px-3 py-2 rounded-md text-sm hover:bg-accent group flex items-center justify-between gap-2"
                 >
-                  {note.data?.content || 'Empty note'}
+                  <span className="flex-1 truncate">{note.data?.content || 'Empty note'}</span>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await deleteNote(note.id);
+                        console.log('Note deleted:', note.id);
+                        // Refresh notes to sync UI
+                        if (currentProjectId) {
+                          await fetchNotes(currentProjectId);
+                        }
+                      } catch (error) {
+                        console.error('Error deleting note:', error);
+                        alert('Failed to delete note. Please try again.');
+                      }
+                    }}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-500/20 rounded px-1 py-0.5 text-xs"
+                    title="Delete note"
+                  >
+                    ✕
+                  </button>
                 </div>
               ))}
             </div>

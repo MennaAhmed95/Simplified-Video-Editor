@@ -2,6 +2,7 @@ import React from 'react';
 import { useTimelineStore } from '../../stores/timelineStore';
 import { formatTime } from '../../utils/time';
 import { Button } from '../ui/button';
+
 // Simple play/pause icons
 const PlayIcon = () => (
   <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
@@ -19,9 +20,7 @@ export const PlaybackControls = () => {
   const {
     playheadPosition,
     duration,
-    zoom,
     setPlayheadPosition,
-    setZoom,
   } = useTimelineStore();
 
   const [isPlaying, setIsPlaying] = React.useState(false);
@@ -67,14 +66,6 @@ export const PlaybackControls = () => {
     };
   }, []);
 
-  const handleZoomIn = () => {
-    setZoom(zoom * 1.5);
-  };
-
-  const handleZoomOut = () => {
-    setZoom(zoom / 1.5);
-  };
-
   return (
     <div className="h-16 border-t bg-background flex items-center justify-between px-4">
       <div className="flex items-center gap-4">
@@ -108,16 +99,6 @@ export const PlaybackControls = () => {
             className="w-full"
           />
         </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Timeline Scale</span>
-        <Button variant="outline" size="icon" onClick={handleZoomOut}>
-          -
-        </Button>
-        <Button variant="outline" size="icon" onClick={handleZoomIn}>
-          +
-        </Button>
       </div>
     </div>
   );

@@ -36,14 +36,17 @@ export const Clip = ({ clip, zoom, pixelsPerSecond, playheadPosition, onClick, o
 
   React.useEffect(() => {
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      const handleMove = (e) => handleMouseMove(e);
+      const handleUp = () => handleMouseUp();
+      
+      document.addEventListener('mousemove', handleMove);
+      document.addEventListener('mouseup', handleUp);
       return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('mousemove', handleMove);
+        document.removeEventListener('mouseup', handleUp);
       };
     }
-  }, [isDragging, dragStart]);
+  }, [isDragging, dragStart, pixelsPerSecond, zoom, onMove]);
 
   return (
     <div
@@ -56,8 +59,9 @@ export const Clip = ({ clip, zoom, pixelsPerSecond, playheadPosition, onClick, o
       }}
       onClick={onClick}
       onMouseDown={handleMouseDown}
+      title={clip.data?.name || `Clip ${clip.id.slice(0, 8)}`}
     >
-      <div className="h-full px-2 flex items-center text-xs truncate">
+      <div className="h-full px-1 sm:px-2 flex items-center text-xs break-words overflow-hidden line-clamp-2">
         {clip.data?.name || `Clip ${clip.id.slice(0, 8)}`}
       </div>
     </div>
